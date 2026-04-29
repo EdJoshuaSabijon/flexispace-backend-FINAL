@@ -20,10 +20,11 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-    'https://flexispace-frontend-final.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:5174',
-],
+        'https://flexispace-frontend-final.vercel.app',
+        'https://flexispace-frontend-final-k7ndyri9m-edsabijon-9475s-projects.vercel.app',
+        'http://localhost:5173',
+        'http://localhost:5174',
+    ],
 
     'allowed_origins_patterns' => [],
 
