@@ -13,42 +13,49 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        // DEBUG: Check email count before validation
-        $emailCount = User::where('email', $request->email)->count();
-        \Illuminate\Support\Facades\Log::info('Register debug - Email: ' . $request->email . ' | Count: ' . $emailCount);
-        
-        // Temporary debug response - uncomment to test
-        // return response()->json(['debug' => true, 'email' => $request->email, 'count' => $emailCount]);
-        
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string',
-            'address' => 'nullable|string',
-        ]);
+        try {
+            // DEBUG: Check email count before validation
+            $emailCount = User::where('email', $request->email)->count();
+            \Illuminate\Support\Facades\Log::info('Register debug - Email: ' . $request->email . ' | Count: ' . $emailCount);
+            
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8|confirmed',
+                'phone' => 'nullable|string',
+                'address' => 'nullable|string',
+            ]);
 
-        $user = User::create([
-            'name' => $validated['first_name'] . ' ' . $validated['last_name'],
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'customer',
-            'phone' => $validated['phone'] ?? null,
-            'address' => $validated['address'] ?? null,
-        ]);
+            $user = User::create([
+                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'customer',
+                'phone' => $validated['phone'] ?? null,
+                'address' => $validated['address'] ?? null,
+            ]);
 
-        // Send welcome email
-        Mail::to($user->email)->send(new WelcomeEmail($user));
+            // Send welcome email (don't fail if email fails)
+            try {
+                Mail::to($user->email)->send(new WelcomeEmail($user));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send welcome email: ' . $e->getMessage());
+            }
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+            $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ], 201);
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+            ], 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Registration error: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error($e->getTraceAsString());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
     }
 
     public function login(Request $request)
