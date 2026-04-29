@@ -17,12 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: \Illuminate\Http\Middleware\HandleCors::class);
 
         // CSRF exceptions for API endpoints - add your Railway and Vercel domains
-        $middleware->validateCsrfTokens(except: [
-            'http://localhost:5173',
-            'http://localhost:3000',
-            'https://*.railway.app',
-            'https://*.vercel.app',
-        ]);
+       $middleware->validateCsrfTokens(except: [
+    'api/*',
+]);
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,

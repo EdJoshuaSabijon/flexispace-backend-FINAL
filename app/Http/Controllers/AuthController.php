@@ -13,6 +13,13 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        // DEBUG: Check email count before validation
+        $emailCount = User::where('email', $request->email)->count();
+        \Illuminate\Support\Facades\Log::info('Register debug - Email: ' . $request->email . ' | Count: ' . $emailCount);
+        
+        // Temporary debug response - uncomment to test
+        // return response()->json(['debug' => true, 'email' => $request->email, 'count' => $emailCount]);
+        
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',

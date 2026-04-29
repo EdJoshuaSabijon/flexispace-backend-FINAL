@@ -9,8 +9,12 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        // DEBUG: Get all users to see what's in database
-        $customers = User::withCount('orders')
+        // Fetch only customers (role = 'customer')
+        // Also include users with null/empty role as they might be customers too
+        $customers = User::where('role', 'customer')
+            ->orWhereNull('role')
+            ->orWhere('role', '')
+            ->withCount('orders')
             ->latest()
             ->get()
             ->map(function ($user) {
