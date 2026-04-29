@@ -106,4 +106,30 @@ class AuthController extends Controller
     {
         return response()->json($request->user());
     }
+
+    public function resendVerification(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified'], 400);
+        }
+
+        // Send verification email
+        try {
+            Mail::to($user->email)->send(new WelcomeEmail($user));
+            return response()->json(['message' => 'Verification email sent!']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to resend verification: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to send verification email. Please try again.'], 500);
+        }
+    }
 }
