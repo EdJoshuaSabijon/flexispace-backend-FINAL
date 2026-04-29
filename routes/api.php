@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\NotificationController;
@@ -48,6 +49,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/orders',   [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 
+    // Profile
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::delete('/profile', [ProfileController::class, 'destroy']);
+
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
@@ -72,6 +77,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // Customers
     Route::get('/customers',        [AdminCustomerController::class, 'index']);
     Route::get('/customers/{user}', [AdminCustomerController::class, 'show']);
+    Route::delete('/customers/{user}', [AdminCustomerController::class, 'destroy']);
 });
 
 /*

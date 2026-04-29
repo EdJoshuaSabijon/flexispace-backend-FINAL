@@ -52,4 +52,21 @@ class CustomerController extends Controller
             'orders'         => $user->orders,
         ]);
     }
+
+    public function destroy(User $user)
+    {
+        // Prevent deleting admin accounts
+        if ($user->role === 'admin') {
+            return response()->json([
+                'message' => 'Cannot delete admin accounts'
+            ], 403);
+        }
+
+        // Delete the user
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Customer deleted successfully'
+        ]);
+    }
 }
