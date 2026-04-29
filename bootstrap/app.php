@@ -13,14 +13,16 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+        // CORS must come first for API routes
+        $middleware->api(prepend: \Illuminate\Http\Middleware\HandleCors::class);
 
+        // CSRF exceptions for API endpoints - add your Railway and Vercel domains
         $middleware->validateCsrfTokens(except: [
             'http://localhost:5173',
             'http://localhost:3000',
+            'https://*.railway.app',
+            'https://*.vercel.app',
         ]);
-
-        $middleware->api(prepend: \Illuminate\Http\Middleware\HandleCors::class);
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
