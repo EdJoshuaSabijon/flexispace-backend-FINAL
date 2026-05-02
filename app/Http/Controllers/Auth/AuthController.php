@@ -73,6 +73,7 @@ class AuthController extends Controller
         $user->role       = 'customer';
         $user->phone      = $request->phone ?? null;
         $user->address    = $request->address ?? null;
+        $user->email_verified_at = now(); // Auto-verify for immediate access
         $user->save();
 
         try {
