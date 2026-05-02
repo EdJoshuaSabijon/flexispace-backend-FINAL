@@ -24,6 +24,7 @@ return [
         'http://localhost:3000',
         'https://flexispace-frontend-final.vercel.app',
         'https://*.vercel.app',
+        'https://*.up.railway.app',
         env('FRONTEND_URL'),
     ],
 
