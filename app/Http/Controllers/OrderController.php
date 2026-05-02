@@ -116,4 +116,42 @@ class OrderController extends Controller
         
         return response()->json($order);
     }
+
+    public function cancel(Request $request, $id)
+    {
+        $request->validate([
+            'cancel_reason' => 'required|string|max:500',
+        ]);
+
+        $order = Order::findOrFail($id);
+
+        // Ensure user owns this order
+        if ($order->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Only allow cancellation of Pending or Processing orders
+        if (!in_array($order->status, ['Pending', 'Processing'])) {
+            return response()->json(['message' => 'This order can no longer be cancelled.'], 400);
+        }
+
+        $order->update([
+            'status' => 'Cancelled',
+            'cancel_reason' => $request->cancel_reason,
+        ]);
+
+        // Restore stock
+        foreach ($order->orderItems as $item) {
+            $product = Product::find($item->product_id);
+            if ($product) {
+                $product->stock += $item->quantity;
+                $product->save();
+            }
+        }
+
+        return response()->json([
+            'message' => 'Order cancelled successfully.',
+            'order' => $order->fresh(),
+        ]);
+    }
 }

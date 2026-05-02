@@ -39,8 +39,6 @@ class AuthController extends Controller
             $existingUser->last_name  = $request->last_name;
             $existingUser->name       = $request->first_name . ' ' . $request->last_name;
             $existingUser->password   = Hash::make($request->password);
-            $existingUser->phone      = $request->phone ?? null;
-            $existingUser->address    = $request->address ?? null;
             $existingUser->save();
 
             try {
@@ -73,14 +71,22 @@ class AuthController extends Controller
         $user->role       = 'customer';
         $user->phone      = $request->phone ?? null;
         $user->address    = $request->address ?? null;
-        $user->email_verified_at = now(); // Auto-verify for immediate access
+
         $user->save();
+
+        // Send verification email
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Exception $e) {
+            \Log::error('Verification email failed: ' . $e->getMessage());
+        }
 
         try {
             $user->sendEmailVerificationNotification();
         } catch (\Exception $e) {
             \Log::error('Verification email failed: ' . $e->getMessage());
         }
+
 
         return response()->json([
             'message' => 'Registration successful. Please check your email to verify your account.',
@@ -93,8 +99,7 @@ class AuthController extends Controller
                 'role'       => $user->role,
                 'verified'   => false,
             ],
-        ], 201);
-    }
+        ], 201);    }
 
     public function login(Request $request)
     {
@@ -109,14 +114,15 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        if (!$user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             Auth::logout();
             return response()->json([
-                'message'            => 'Email not verified. Please verify your email before logging in.',
+                'message' => 'Email not verified. Please verify your email before logging in.',
                 'email_not_verified' => true,
-                'email'              => $user->email,
+                'email' => $user->email,
             ], 403);
         }
+
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

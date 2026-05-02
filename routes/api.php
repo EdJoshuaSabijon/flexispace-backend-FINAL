@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/orders',    [OrderController::class, 'index']);
     Route::post('/orders',   [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::patch('/orders/{id}/cancel', [OrderController::class, 'cancel']);
 
     // Profile
     Route::put('/profile', [ProfileController::class, 'update']);
@@ -92,6 +93,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/orders/export',     [AdminOrderController::class, 'export']);
     Route::get('/orders/{order}',    [AdminOrderController::class, 'show']);
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus']);
+    Route::patch('/orders/{order}/reject', [AdminOrderController::class, 'rejectOrder']);
 
     // Customers
     Route::get('/customers',        [AdminCustomerController::class, 'index']);

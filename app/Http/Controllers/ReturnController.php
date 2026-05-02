@@ -19,6 +19,7 @@ class ReturnController extends Controller
         $request->validate([
             'order_id' => 'required|exists:orders,id',
             'reason' => 'required|string|min:10',
+            'defect_image' => 'required|image|max:5120', // Max 5MB
         ]);
 
         $user = request()->user();
@@ -29,10 +30,20 @@ class ReturnController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // Only allow returns on Delivered orders
+        if ($order->status !== 'Delivered') {
+            return response()->json(['message' => 'Only delivered orders can be returned.'], 400);
+        }
+
         // Check if return already exists for this order
         $existingReturn = ReturnRequest::where('order_id', $request->order_id)->first();
         if ($existingReturn) {
             return response()->json(['message' => 'Return request already exists for this order'], 400);
+        }
+
+        $defectImagePath = null;
+        if ($request->hasFile('defect_image')) {
+            $defectImagePath = $request->file('defect_image')->store('defects', 'public');
         }
 
         $returnRequest = ReturnRequest::create([
@@ -40,6 +51,7 @@ class ReturnController extends Controller
             'user_id' => $user->id,
             'reason' => $request->reason,
             'status' => 'Pending',
+            'defect_image' => $defectImagePath,
         ]);
 
         return response()->json($returnRequest, 201);

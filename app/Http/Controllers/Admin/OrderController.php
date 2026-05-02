@@ -23,6 +23,8 @@ class OrderController extends Controller
                     'contact_number' => $order->contact_number,
                     'payment_method' => $order->payment_method,
                     'proof_of_payment' => $order->proof_of_payment,
+                    'cancel_reason' => $order->cancel_reason,
+                    'rejection_reason' => $order->rejection_reason,
                     'created_at' => $order->created_at,
                     'customer' => [
                         'name' => $order->user->name ?? 'N/A',
@@ -57,7 +59,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:Pending,Processing,Shipped,Delivered,Cancelled',
+            'status' => 'required|in:Pending,Processing,Shipped,Delivered,Cancelled,Rejected',
         ]);
 
         $oldStatus = $order->status;
@@ -85,6 +87,45 @@ class OrderController extends Controller
     {
         $order->load(['user', 'orderItems.product']);
         return response()->json($order);
+    }
+
+    public function rejectOrder(Request $request, Order $order)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        // Only allow rejecting Pending orders
+        if ($order->status !== 'Pending') {
+            return response()->json(['message' => 'Only pending orders can be rejected.'], 400);
+        }
+
+        $order->update([
+            'status' => 'Rejected',
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        // Restore stock
+        foreach ($order->orderItems as $item) {
+            $product = \App\Models\Product::find($item->product_id);
+            if ($product) {
+                $product->stock += $item->quantity;
+                $product->save();
+            }
+        }
+
+        if ($order->user) {
+            try {
+                $order->user->notify(new OrderStatusUpdated($order, 'Pending', 'Rejected'));
+            } catch (\Exception $e) {
+                // Notification failed but status was updated
+            }
+        }
+
+        return response()->json([
+            'message' => 'Order rejected successfully.',
+            'order' => $order->fresh(),
+        ]);
     }
 
     public function export()

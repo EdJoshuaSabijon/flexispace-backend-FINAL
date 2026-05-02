@@ -18,6 +18,8 @@ class Order extends Model
         'tracking_number',
         'latitude',
         'longitude',
+        'cancel_reason',
+        'rejection_reason',
     ];
 
     protected $casts = [

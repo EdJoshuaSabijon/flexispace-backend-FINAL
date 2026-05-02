@@ -17,6 +17,7 @@ class ReturnRequest extends Model
         'reason',
         'status',
         'admin_notes',
+        'defect_image',
     ];
 
     public function order()
