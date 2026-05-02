@@ -21,6 +21,8 @@ class OrderController extends Controller
                     'total_amount' => $order->total_amount,
                     'shipping_address' => $order->shipping_address,
                     'contact_number' => $order->contact_number,
+                    'payment_method' => $order->payment_method,
+                    'proof_of_payment' => $order->proof_of_payment,
                     'created_at' => $order->created_at,
                     'customer' => [
                         'name' => $order->user->name ?? 'N/A',

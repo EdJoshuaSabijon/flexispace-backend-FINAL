@@ -2,13 +2,17 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\LogisticsProviderController;
+use App\Http\Controllers\GcashSettingsController;
+use App\Http\Controllers\ReturnController;
+use App\Http\Controllers\Admin\FinancialController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 /*
@@ -27,6 +31,13 @@ Route::post('/email/resend-verification', [AuthController::class, 'resendVerific
 |--------------------------------------------------------------------------
 */
 Route::get('/products', [ProductController::class, 'index']);
+
+/*
+|--------------------------------------------------------------------------
+| Public Logistics Routes
+|--------------------------------------------------------------------------
+*/
+Route::get('/logistics-providers', [LogisticsProviderController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
@@ -60,6 +71,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         $request->user()->unreadNotifications->markAsRead();
         return response()->json(['message' => 'All marked as read.']);
     });
+
+    // Returns
+    Route::get('/returns', [ReturnController::class, 'index']);
+    Route::post('/returns', [ReturnController::class, 'store']);
+    Route::get('/returns/{id}', [ReturnController::class, 'show']);
+
+    // GCash Settings (public for customers to see)
+    Route::get('/gcash-settings', [GcashSettingsController::class, 'index']);
 });
 
 /*
@@ -78,6 +97,23 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/customers',        [AdminCustomerController::class, 'index']);
     Route::get('/customers/{user}', [AdminCustomerController::class, 'show']);
     Route::delete('/customers/{user}', [AdminCustomerController::class, 'destroy']);
+
+    // Logistics Providers
+    Route::get('/logistics-providers', [LogisticsProviderController::class, 'adminIndex']);
+    Route::post('/logistics-providers', [LogisticsProviderController::class, 'store']);
+    Route::put('/logistics-providers/{id}', [LogisticsProviderController::class, 'update']);
+    Route::delete('/logistics-providers/{id}', [LogisticsProviderController::class, 'destroy']);
+
+    // GCash Settings
+    Route::put('/gcash-settings', [GcashSettingsController::class, 'update']);
+
+    // Returns Management
+    Route::get('/returns', [ReturnController::class, 'adminIndex']);
+    Route::patch('/returns/{id}/status', [ReturnController::class, 'updateStatus']);
+
+    // Financial
+    Route::get('/financial/report', [FinancialController::class, 'getReport']);
+    Route::get('/financial/export', [FinancialController::class, 'getExportData']);
 });
 
 /*

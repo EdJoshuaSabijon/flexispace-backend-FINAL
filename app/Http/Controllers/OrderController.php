@@ -18,7 +18,7 @@ class OrderController extends Controller
         
         // Only return orders for the authenticated user
         $orders = Order::where('user_id', $userId)
-            ->with(['orderItems.product'])
+            ->with(['orderItems.product', 'logisticsProvider'])
             ->latest()
             ->get();
         
@@ -35,6 +35,11 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'shipping_address' => 'required|string',
             'contact_number' => 'required|string',
+            'logistics_provider_id' => 'nullable|exists:logistics_providers,id',
+            'payment_method' => 'required|in:cod,gcash',
+            'proof_of_payment' => 'nullable|image|max:2048',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         $user = $request->user();
@@ -57,12 +62,22 @@ class OrderController extends Controller
                 ];
             }
 
+            $proofOfPaymentPath = null;
+            if ($request->hasFile('proof_of_payment')) {
+                $proofOfPaymentPath = $request->file('proof_of_payment')->store('proofs', 'public');
+            }
+
             $order = Order::create([
                 'user_id' => $user->id,
                 'status' => 'Pending',
                 'total_amount' => $totalAmount,
                 'shipping_address' => $validated['shipping_address'],
                 'contact_number' => $validated['contact_number'],
+                'logistics_provider_id' => $validated['logistics_provider_id'] ?? null,
+                'payment_method' => $validated['payment_method'],
+                'proof_of_payment' => $proofOfPaymentPath,
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
             ]);
 
             foreach ($orderItems as $item) {
@@ -92,7 +107,7 @@ class OrderController extends Controller
 
     public function show(Request $request, $id)
     {
-        $order = Order::with(['orderItems.product'])->findOrFail($id);
+        $order = Order::with(['orderItems.product', 'logisticsProvider'])->findOrFail($id);
         
         // Ensure user can only view their own orders (unless admin)
         if ($request->user()->role !== 'admin' && $order->user_id !== $request->user()->id) {

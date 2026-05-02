@@ -27,6 +27,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'role',
         'phone',
         'address',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -57,6 +59,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function notifications()
     {
         return $this->morphMany(\Illuminate\Notifications\DatabaseNotification::class, 'notifiable')->orderBy('created_at', 'desc');
+    }
+
+    public function returnRequests()
+    {
+        return $this->hasMany(ReturnRequest::class);
     }
 
     public function sendEmailVerificationNotification(): void

@@ -12,6 +12,12 @@ class Order extends Model
         'total_amount',
         'shipping_address',
         'contact_number',
+        'logistics_provider_id',
+        'payment_method',
+        'proof_of_payment',
+        'tracking_number',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [
@@ -26,5 +32,15 @@ class Order extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function logisticsProvider()
+    {
+        return $this->belongsTo(LogisticsProvider::class);
+    }
+
+    public function returnRequests()
+    {
+        return $this->hasMany(ReturnRequest::class);
     }
 }

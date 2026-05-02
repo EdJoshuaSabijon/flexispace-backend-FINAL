@@ -20,6 +20,8 @@ class ProfileController extends Controller
             'last_name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
             'address' => 'sometimes|string|max:500',
+            'latitude' => 'sometimes|numeric|nullable',
+            'longitude' => 'sometimes|numeric|nullable',
             'current_password' => 'sometimes|string|min:6',
             'password' => 'sometimes|string|min:6|confirmed',
         ]);
@@ -43,6 +45,12 @@ class ProfileController extends Controller
         }
         if ($request->has('address')) {
             $user->address = $request->address;
+        }
+        if ($request->has('latitude')) {
+            $user->latitude = $request->latitude;
+        }
+        if ($request->has('longitude')) {
+            $user->longitude = $request->longitude;
         }
 
         // Update password if provided
@@ -75,6 +83,8 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'address' => $user->address,
+                'latitude' => $user->latitude,
+                'longitude' => $user->longitude,
                 'role' => $user->role,
             ]
         ]);
