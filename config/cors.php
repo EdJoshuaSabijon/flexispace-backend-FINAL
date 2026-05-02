@@ -22,7 +22,9 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'http://localhost:3000',
-        env('FRONTEND_URL', 'https://flexispace-frontend-final.vercel.app'),
+        'https://flexispace-frontend-final.vercel.app',
+        'https://*.vercel.app',
+        env('FRONTEND_URL'),
     ],
 
     'allowed_origins_patterns' => [],
