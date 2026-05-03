@@ -73,11 +73,28 @@ class AuthController extends Controller
         $user->address    = $request->address ?? null;
         $user->save();
 
-        // Send email verification
+        // Send email verification with detailed logging
         try {
+            \Log::info('Attempting to send verification email to: ' . $user->email);
             $user->sendEmailVerificationNotification();
+            \Log::info('Verification email sent successfully to: ' . $user->email);
         } catch (\Exception $e) {
-            \Log::error('Verification email failed: ' . $e->getMessage());
+            \Log::error('Verification email failed for ' . $user->email . ': ' . $e->getMessage());
+            \Log::error('Full error trace: ' . $e->getTraceAsString());
+            // Return detailed error for debugging
+            return response()->json([
+                'message' => 'Registration successful, but there was an issue sending the verification email. Please contact support.',
+                'error' => 'Email sending failed: ' . $e->getMessage(),
+                'user'    => [
+                    'id'         => $user->id,
+                    'name'       => $user->name,
+                    'first_name' => $user->first_name,
+                    'last_name'  => $user->last_name,
+                    'email'      => $user->email,
+                    'role'       => $user->role,
+                    'verified'   => false,
+                ],
+            ], 201);
         }
 
         return response()->json([
