@@ -71,15 +71,17 @@ class AuthController extends Controller
         $user->role       = 'customer';
         $user->phone      = $request->phone ?? null;
         $user->address    = $request->address ?? null;
-        $user->email_verified_at = now();
         $user->save();
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Send email verification
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Exception $e) {
+            \Log::error('Verification email failed: ' . $e->getMessage());
+        }
 
         return response()->json([
-            'message' => 'Registration successful.',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+            'message' => 'Registration successful. Please check your email to verify your account.',
             'user'    => [
                 'id'         => $user->id,
                 'name'       => $user->name,
@@ -87,7 +89,7 @@ class AuthController extends Controller
                 'last_name'  => $user->last_name,
                 'email'      => $user->email,
                 'role'       => $user->role,
-                'verified'   => true,
+                'verified'   => false,
             ],
         ], 201);
     }
@@ -105,11 +107,15 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Auto-verify if not yet verified
+        // Check if email is verified
         if (!$user->hasVerifiedEmail()) {
-            $user->markEmailAsVerified();
+            Auth::logout();
+            return response()->json([
+                'message'            => 'Email not verified. Please verify your email before logging in.',
+                'email_not_verified' => true,
+                'email'              => $user->email,
+            ], 403);
         }
-
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
