@@ -8,22 +8,18 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\URL;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Bus\Queueable;
-
-class CustomVerifyEmail extends VerifyEmail implements ShouldQueue
+class CustomVerifyEmail extends VerifyEmail
 {
-    use Queueable;
-
     protected function buildMailMessage($url): MailMessage
     {
         return (new MailMessage)
-            ->subject('FlexiSpace - Verify Your Email Address')
-            ->greeting('Hello!')
-            ->line('Please click the button below to verify your email address.')
+            ->subject('Verify Your Email Address - FlexiSpace')
+            ->greeting('Welcome to FlexiSpace!')
+            ->line('Thank you for registering with us. To complete your registration, please verify your email address by clicking the button below.')
             ->action('Verify Email Address', $url)
+            ->line('This verification link will expire in 60 minutes.')
             ->line('If you did not create an account, no further action is required.')
-            ->salutation('Thank you, The FlexiSpace Team');
+            ->salutation('Best regards, The FlexiSpace Team');
     }
 
     protected function verificationUrl($notifiable): string
