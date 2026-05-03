@@ -16,97 +16,36 @@ class AuthController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email',
+            'email'      => 'required|email|unique:users,email',
             'password'   => ['required', 'confirmed', Password::min(8)],
             'phone'      => 'nullable|string|max:20',
             'address'    => 'nullable|string|max:500',
         ]);
 
-        // Check if user already exists
-        $existingUser = User::where('email', $request->email)->first();
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
+            'name'       => $request->first_name . ' ' . $request->last_name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'role'       => 'customer',
+            'phone'      => $request->phone ?? null,
+            'address'    => $request->address ?? null,
+        ]);
 
-        if ($existingUser) {
-            // If already verified, reject
-            if ($existingUser->hasVerifiedEmail()) {
-                return response()->json([
-                    'message' => 'The email has already been taken.',
-                    'errors' => ['email' => ['The email has already been taken.']]
-                ], 422);
-            }
-
-            // User exists but not verified - update their info and resend email
-            $existingUser->first_name = $request->first_name;
-            $existingUser->last_name  = $request->last_name;
-            $existingUser->name       = $request->first_name . ' ' . $request->last_name;
-            $existingUser->password   = Hash::make($request->password);
-            $existingUser->save();
-
-            try {
-                $existingUser->sendEmailVerificationNotification();
-            } catch (\Exception $e) {
-                \Log::error('Verification email failed: ' . $e->getMessage());
-            }
-
-            return response()->json([
-                'message' => 'Verification email resent. Please check your email to verify your account.',
-                'user'    => [
-                    'id'         => $existingUser->id,
-                    'name'       => $existingUser->name,
-                    'first_name' => $existingUser->first_name,
-                    'last_name'  => $existingUser->last_name,
-                    'email'      => $existingUser->email,
-                    'role'       => $existingUser->role,
-                    'verified'   => false,
-                ],
-            ], 201);
-        }
-
-        // Create new user
-        $user = new User();
-        $user->first_name = $request->first_name;
-        $user->last_name  = $request->last_name;
-        $user->name       = $request->first_name . ' ' . $request->last_name;
-        $user->email      = $request->email;
-        $user->password   = Hash::make($request->password);
-        $user->role       = 'customer';
-        $user->phone      = $request->phone ?? null;
-        $user->address    = $request->address ?? null;
-        $user->save();
-
-        // Send email verification with detailed logging
-        try {
-            \Log::info('Attempting to send verification email to: ' . $user->email);
-            $user->sendEmailVerificationNotification();
-            \Log::info('Verification email sent successfully to: ' . $user->email);
-        } catch (\Exception $e) {
-            \Log::error('Verification email failed for ' . $user->email . ': ' . $e->getMessage());
-            \Log::error('Full error trace: ' . $e->getTraceAsString());
-            // Return detailed error for debugging
-            return response()->json([
-                'message' => 'Registration successful, but there was an issue sending the verification email. Please contact support.',
-                'error' => 'Email sending failed: ' . $e->getMessage(),
-                'user'    => [
-                    'id'         => $user->id,
-                    'name'       => $user->name,
-                    'first_name' => $user->first_name,
-                    'last_name'  => $user->last_name,
-                    'email'      => $user->email,
-                    'role'       => $user->role,
-                    'verified'   => false,
-                ],
-            ], 201);
-        }
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Registration successful. Please check your email to verify your account.',
-            'user'    => [
+            'message'      => 'Registration successful.',
+            'access_token' => $token,
+            'token_type'   => 'Bearer',
+            'user'         => [
                 'id'         => $user->id,
                 'name'       => $user->name,
                 'first_name' => $user->first_name,
                 'last_name'  => $user->last_name,
                 'email'      => $user->email,
                 'role'       => $user->role,
-                'verified'   => false,
             ],
         ], 201);
     }
@@ -119,19 +58,14 @@ class AuthController extends Controller
         ]);
 
         if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid credentials.'], 401);
+            return response()->json(['message' => 'Invalid login credentials'], 401);
         }
 
         $user = Auth::user();
 
-        // Check if email is verified
-        if (!$user->hasVerifiedEmail()) {
+        if ($user->role === 'admin') {
             Auth::logout();
-            return response()->json([
-                'message'            => 'Email not verified. Please verify your email before logging in.',
-                'email_not_verified' => true,
-                'email'              => $user->email,
-            ], 403);
+            return response()->json(['message' => 'Please use the admin login page.'], 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -147,7 +81,6 @@ class AuthController extends Controller
                 'last_name'  => $user->last_name,
                 'email'      => $user->email,
                 'role'       => $user->role,
-                'verified'   => true,
             ],
         ]);
     }
@@ -156,31 +89,6 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Logged out successfully.']);
-    }
-
-    public function resendVerification(Request $request)
-    {
-        $request->validate(['email' => 'required|email']);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
-
-        if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.'], 400);
-        }
-
-        try {
-            $user->sendEmailVerificationNotification();
-            return response()->json(['message' => 'Verification email resent successfully.']);
-        } catch (\Exception $e) {
-            \Log::error('Resend verification failed: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to send email. Please check mail configuration.'
-            ], 500);
-        }
     }
 
     public function me(Request $request)
@@ -219,5 +127,11 @@ class AuthController extends Controller
                 'role'  => $user->role,
             ],
         ]);
+    }
+
+    public function adminLogout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Admin logged out successfully.']);
     }
 }

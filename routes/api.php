@@ -12,51 +12,34 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\LogisticsProviderController;
 use App\Http\Controllers\GcashSettingsController;
 use App\Http\Controllers\ReturnController;
-use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\Admin\FinancialController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 /*
 |--------------------------------------------------------------------------
-| Public Routes - No auth required
+| Public Routes
 |--------------------------------------------------------------------------
 */
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
-Route::post('/email/resend-verification', [AuthController::class, 'resendVerification']);
-Route::post('/test-email', [TestEmailController::class, 'sendTestEmail']);
 
 /*
 |--------------------------------------------------------------------------
-| Public Product Routes
+| Public Product & Logistics Routes
 |--------------------------------------------------------------------------
 */
 Route::get('/products', [ProductController::class, 'index']);
-
-/*
-|--------------------------------------------------------------------------
-| Public Logistics Routes
-|--------------------------------------------------------------------------
-*/
 Route::get('/logistics-providers', [LogisticsProviderController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes (no email verification required)
+| Customer Routes
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me',      [AuthController::class, 'me']);
-});
 
-/*
-|--------------------------------------------------------------------------
-| Customer Routes (must be email verified)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Orders
     Route::get('/orders',    [OrderController::class, 'index']);
     Route::post('/orders',   [OrderController::class, 'store']);
@@ -80,7 +63,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/returns', [ReturnController::class, 'store']);
     Route::get('/returns/{id}', [ReturnController::class, 'show']);
 
-    // GCash Settings (public for customers to see)
+    // GCash Settings
     Route::get('/gcash-settings', [GcashSettingsController::class, 'index']);
 });
 
@@ -90,6 +73,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::post('/logout', [AuthController::class, 'adminLogout']);
+
     // Orders
     Route::get('/orders',            [AdminOrderController::class, 'index']);
     Route::get('/orders/export',     [AdminOrderController::class, 'export']);

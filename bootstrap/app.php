@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\ForceCors;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,16 +14,15 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // CORS must come first for API routes
-        $middleware->api(prepend: \Illuminate\Http\Middleware\HandleCors::class);
+        // Force CORS on all routes (handles preflight and error responses)
+        $middleware->prepend(ForceCors::class);
 
-        // CSRF exceptions for API endpoints - add your Railway and Vercel domains
-       $middleware->validateCsrfTokens(except: [
-    'api/*',
-]);
+        // CSRF exceptions for API endpoints
+        $middleware->validateCsrfTokens(except: ['api/*']);
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'supabase' => \App\Http\Middleware\SupabaseAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
