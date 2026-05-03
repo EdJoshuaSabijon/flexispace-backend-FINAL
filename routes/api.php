@@ -12,6 +12,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\LogisticsProviderController;
 use App\Http\Controllers\GcashSettingsController;
 use App\Http\Controllers\ReturnController;
+use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\Admin\FinancialController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
@@ -24,6 +25,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 Route::post('/email/resend-verification', [AuthController::class, 'resendVerification']);
+Route::post('/test-email', [TestEmailController::class, 'sendTestEmail']);
 
 /*
 |--------------------------------------------------------------------------
