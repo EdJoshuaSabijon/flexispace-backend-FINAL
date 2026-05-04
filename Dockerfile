@@ -17,9 +17,10 @@ RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Enable Apache mod_rewrite for Laravel routing
 RUN a2enmod rewrite
-# Fix for "More than one MPM loaded" error
+# Force only mpm_prefork and disable others to resolve AH00534
 RUN a2dismod mpm_event mpm_worker || true
 RUN a2enmod mpm_prefork || true
+RUN find /etc/apache2/mods-enabled -name "mpm_*.load" ! -name "mpm_prefork.load" -delete || true
 
 
 # Update Apache document root to Laravel's public directory
