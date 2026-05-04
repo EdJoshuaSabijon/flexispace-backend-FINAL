@@ -1,0 +1,5 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+preDeployCommand = "php artisan migrate --force && php artisan db:seed --class=RestoreUsersSeeder --force"
