@@ -60,5 +60,5 @@ ENV PORT=8080
 # Expose the dynamic port
 EXPOSE $PORT
 
-# Start command: Run migrations, then start Apache
-CMD php artisan migrate --force && apache2-foreground
+# Start command: Start Apache
+CMD ["apache2-foreground"]
