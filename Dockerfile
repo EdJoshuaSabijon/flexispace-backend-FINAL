@@ -17,7 +17,7 @@ RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Enable Apache mod_rewrite for Laravel routing
 RUN a2enmod rewrite
-
+RUN a2dismod mpm_event && a2enmod mpm_prefork
 # Update Apache document root to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
