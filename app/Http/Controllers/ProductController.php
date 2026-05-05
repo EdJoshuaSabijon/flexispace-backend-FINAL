@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Storage;
+use Cloudinary\Cloudinary;
 
 class ProductController extends Controller
 {
@@ -27,8 +28,13 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
-            $validated['image_path'] = $path;
+            $uploadedFile = $request->file('image');
+            $cloudinary = new Cloudinary();
+            $result = $cloudinary->uploadApi()->upload($uploadedFile->getRealPath(), [
+                'folder' => 'flexispace/products',
+                'resource_type' => 'image',
+            ]);
+            $validated['image_path'] = $result['secure_url'];
         }
 
         $product = Product::create($validated);
@@ -50,11 +56,14 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($product->image_path) {
-                Storage::disk('public')->delete($product->image_path);
-            }
-            $validated['image_path'] = $request->file('image')->store('products', 'public');
+            // Upload new image to Cloudinary
+            $uploadedFile = $request->file('image');
+            $cloudinary = new Cloudinary();
+            $result = $cloudinary->uploadApi()->upload($uploadedFile->getRealPath(), [
+                'folder' => 'flexispace/products',
+                'resource_type' => 'image',
+            ]);
+            $validated['image_path'] = $result['secure_url'];
         }
 
         $product->update($validated);
@@ -77,8 +86,13 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
-            $product->image_path = $path;
+            $uploadedFile = $request->file('image');
+            $cloudinary = new Cloudinary();
+            $result = $cloudinary->uploadApi()->upload($uploadedFile->getRealPath(), [
+                'folder' => 'flexispace/products',
+                'resource_type' => 'image',
+            ]);
+            $product->image_path = $result['secure_url'];
             $product->save();
         }
 

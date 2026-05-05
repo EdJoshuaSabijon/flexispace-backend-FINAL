@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GcashSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Cloudinary\Cloudinary;
 
 class GcashSettingsController extends Controller
 {
@@ -35,15 +36,15 @@ class GcashSettingsController extends Controller
 
         $data = $request->except('gcash_qr_code');
 
-        // Handle QR code upload
+        // Handle QR code upload to Cloudinary
         if ($request->hasFile('gcash_qr_code')) {
-            // Delete old QR code if exists
-            if ($settings->gcash_qr_code) {
-                Storage::disk('public')->delete($settings->gcash_qr_code);
-            }
-
-            $path = $request->file('gcash_qr_code')->store('gcash-qr', 'public');
-            $data['gcash_qr_code'] = $path;
+            $uploadedFile = $request->file('gcash_qr_code');
+            $cloudinary = new Cloudinary();
+            $result = $cloudinary->uploadApi()->upload($uploadedFile->getRealPath(), [
+                'folder' => 'flexispace/gcash-qr',
+                'resource_type' => 'image',
+            ]);
+            $data['gcash_qr_code'] = $result['secure_url'];
         }
 
         $settings->update($data);
