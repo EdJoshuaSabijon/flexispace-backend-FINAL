@@ -1,23 +1,15 @@
 <?php
-
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
-
     'allowed_methods' => ['*'],
-
-    'allowed_origins' => ['*'],
-
-    'allowed_origins_patterns' => [
-        '#^https://.*\.up\.railway\.app$#',
-        '#^https://.*\.vercel\.app$#',
+    'allowed_origins' => [
+        'https://flexispace-frontend-final-production.up.railway.app',
+        'http://localhost:5173',
+        'http://localhost:3000',
     ],
-
+    'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
-
     'exposed_headers' => [],
-
     'max_age' => 86400,
-
-    // Must be false when using wildcard origin — credentials handled by ForceCors middleware
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 ];
