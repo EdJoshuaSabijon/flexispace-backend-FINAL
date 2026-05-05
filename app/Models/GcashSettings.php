@@ -20,6 +20,23 @@ class GcashSettings extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = ['gcash_qr_code_url'];
+
+    public function getGcashQrCodeUrlAttribute()
+    {
+        if (!$this->gcash_qr_code) {
+            return null;
+        }
+
+        if (filter_var($this->gcash_qr_code, FILTER_VALIDATE_URL)) {
+            return $this->gcash_qr_code;
+        }
+
+        // Return full URL for Railway deployment
+        $baseUrl = env('APP_URL', config('app.url'));
+        return rtrim($baseUrl, '/') . '/storage/' . $this->gcash_qr_code;
+    }
+
     /**
      * Get the active GCash settings (singleton pattern)
      */

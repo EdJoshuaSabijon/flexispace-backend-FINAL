@@ -33,7 +33,9 @@ class Product extends Model
             return $this->image_path;
         }
 
-        return asset('storage/' . $this->image_path);
+        // Return full URL for Railway deployment
+        $baseUrl = env('APP_URL', config('app.url'));
+        return rtrim($baseUrl, '/') . '/storage/' . $this->image_path;
     }
 
     public function orderItems()

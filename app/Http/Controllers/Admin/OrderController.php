@@ -105,7 +105,8 @@ class OrderController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
 
-        // Restore stock
+        // Restore stock - load relationship first
+        $order->load('orderItems');
         foreach ($order->orderItems as $item) {
             $product = \App\Models\Product::find($item->product_id);
             if ($product) {
@@ -124,7 +125,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Order rejected successfully.',
-            'order' => $order->fresh(),
+            'order' => $order->fresh()->load('orderItems.product'),
         ]);
     }
 
