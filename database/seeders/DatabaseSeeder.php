@@ -17,26 +17,30 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Admin account
-        \App\Models\User::create([
-            'name' => 'Admin FlexiSpace',
-            'first_name' => 'Admin',
-            'last_name' => 'FlexiSpace',
-            'email' => 'admin@flexispace.com',
-            'password' => bcrypt('admin123'),
-            'role' => 'admin',
-            'email_verified_at' => now(),
-        ]);
+        \App\Models\User::firstOrCreate(
+            ['email' => 'admin@flexispace.com'],
+            [
+                'name' => 'Admin FlexiSpace',
+                'first_name' => 'Admin',
+                'last_name' => 'FlexiSpace',
+                'password' => bcrypt('admin123'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Sample customer account
-        \App\Models\User::create([
-            'name' => 'John Doe',
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'email' => 'customer@flexispace.com',
-            'password' => bcrypt('customer123'),
-            'role' => 'customer',
-            'email_verified_at' => now(),
-        ]);
+        \App\Models\User::firstOrCreate(
+            ['email' => 'customer@flexispace.com'],
+            [
+                'name' => 'John Doe',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'password' => bcrypt('customer123'),
+                'role' => 'customer',
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Seed products
         $products = [
